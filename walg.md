@@ -1,6 +1,7 @@
 # WAL-G — инструмент для управления бэкапом и восстановлением БД
 
-Исходники на  [Github](https://github.com/wal-g/wal-g).
+* Исходники на  [Github](https://github.com/wal-g/wal-g).
+* Статья на [Medium](https://medium.com/@philyuchkoff/wal-g-953490c74b98)
 
 ![](https://miro.medium.com/max/2560/1*4RDYehIXv93nUZX3_sWqBA.jpeg)
 
@@ -10,16 +11,32 @@ WAL-G — простой и эффективный инструмент для �
 
 Расскажу на примере PostgreSQL и MongoDB, как пользоваться этой штукой.
 
-Для хранения бэкапов я поднял у себя  [MinIO](https://min.io/)  — легкое хранилище объектов, совместимое с  [Amazon S3](https://aws.amazon.com/s3/).
+## MinIO
+Для хранения бэкапов я поднял у себя  [MinIO](https://min.io/)  — легкое хранилище объектов, совместимое с  [Amazon S3](https://aws.amazon.com/s3/):
+
+````
+wget https://dl.min.io/server/minio/release/linux-amd64/minio
+chmod +x minio
+MINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password ./minio server /mnt/data --console-address ":9001"
+sudo systemctl start minio
+sudo systemctl enable minio
+sudo systemctl status minio
+````
 
 ## PostgreSQL
 
-Для теста на одном из хостов поднимем PostgreSQL12:
+Для теста на одном из хостов (CentOS 7) поднимем PostgreSQL 14:
 ````
-yum install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-yum install postgresql12-server
-/usr/pgsql-12/bin/postgresql-12-setup initdb
-systemctl enable postgresql-12 && systemctl start postgresql-12
+# Install the repository RPM:
+sudo yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+# Install PostgreSQL:
+sudo yum install -y postgresql14-server
+
+# Optionally initialize the database and enable automatic start:
+sudo /usr/pgsql-14/bin/postgresql-14-setup initdb
+sudo systemctl enable postgresql-14
+sudo systemctl start postgresql-14
 ````
 
 создаю тестовую базу:
@@ -59,9 +76,9 @@ restore_command=’/usr/local/bin/wal-g wal-fetch \”%f\” \”%p\” >> /var/
 
 И рестартую PostgreSQL:
 
-`systemctl restart postgresql-12`
+`systemctl restart postgresql-14`
 
-На тот же хост, где и PostgreSQL, ставлю WAL-G последней на данный момент версии 0.2.15 (по сути — это просто один бинарник, без внешних зависимостей):
+На тот же хост, где и PostgreSQL, ставлю WAL-G последней на данный момент версии 2.0.0 (по сути — это просто один бинарник, без внешних зависимостей):
 
 ````
 curl -L "https://github.com/wal-g/wal-g/releases/download/v0.2.15/wal-g.linux-amd64.tar.gz" -o "wal-g.linux-amd64.tar.gz"
